@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<body style="background:#222;text-align:center;color:white;font-family:Arial">
+
+<h2>Nokia Snake 🐍</h2>
+<canvas id="c" width="300" height="300" style="background:#9bbc0f"></canvas>
+
+<h3 id="score">Score: 0</h3>
+<button id="restart" onclick="start()" style="display:none">🔄 Restart Game</button>
+
+<br><br>
+<button onclick="up()">⬆️</button><br>
+<button onclick="left()">⬅️</button>
+<button onclick="down()">⬇️</button>
+<button onclick="right()">➡️</button>
+
+<script>
+let c=document.getElementById("c"),x=c.getContext("2d");
+let snake,dx,dy,food,score,gameOver;
+
+function start(){
+ snake=[{x:150,y:150}];
+ dx=15; dy=0;
+ food={x:60,y:60};
+ score=0;
+ gameOver=false;
+
+ document.getElementById("score").innerText="Score: 0";
+ document.getElementById("restart").style.display="none";
+}
+
+document.onkeydown=function(e){
+ if(e.key=="ArrowUp") up();
+ if(e.key=="ArrowDown") down();
+ if(e.key=="ArrowLeft") left();
+ if(e.key=="ArrowRight") right();
+};
+
+function up(){if(!gameOver&&dy==0){dx=0;dy=-15}}
+function down(){if(!gameOver&&dy==0){dx=0;dy=15}}
+function left(){if(!gameOver&&dx==0){dx=-15;dy=0}}
+function right(){if(!gameOver&&dx==0){dx=15;dy=0}}
+
+function game(){
+ if(gameOver)return;
+
+ let h={x:snake[0].x+dx,y:snake[0].y+dy};
+
+ if(h.x<0||h.x>=300||h.y<0||h.y>=300){
+  die();
+  return;
+ }
+
+ snake.unshift(h);
+
+ if(h.x==food.x&&h.y==food.y){
+  score++;
+  document.getElementById("score").innerText="Score: "+score;
+  food={
+   x:Math.floor(Math.random()*20)*15,
+   y:Math.floor(Math.random()*20)*15
+  };
+ }else{
+  snake.pop();
+ }
+
+ x.clearRect(0,0,300,300);
+
+ x.fillStyle="#306230";
+ snake.forEach(p=>x.fillRect(p.x,p.y,14,14));
+
+ x.fillStyle="#0f380f";
+ x.fillRect(food.x,food.y,14,14);
+}
+
+function die(){
+ gameOver=true;
+ document.getElementById("restart").style.display="inline";
+ x.fillStyle="#222";
+ x.font="30px Arial";
+ x.fillText("GAME OVER",75,145);
+}
+
+start();
+setInterval(game,150);
+</script>
+
+</body>
+</html>
