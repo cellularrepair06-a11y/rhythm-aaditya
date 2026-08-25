@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chess</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#222;
+  color:white;
+  font-family:Arial,sans-serif;
+  text-align:center;
+}
+
+h1{
+  margin:12px 0 5px;
+}
+
+#status{
+  font-size:20px;
+  margin:8px;
+}
+
+#board{
+  width:min(95vw,700px);
+  aspect-ratio:1 / 1;
+  margin:10px auto;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+  border:6px solid #111;
+  box-sizing:border-box;
+}
+
+.square{
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:clamp(35px,9vw,75px);
+  cursor:pointer;
+  user-select:none;
+}
+
+.light{
+  background:#f0d9b5;
+}
+
+.dark{
+  background:#b58863;
+}
+
+.selected{
+  background:#f6f669 !important;
+}
+
+.move{
+  box-shadow:inset 0 0 0 6px #55aa55;
+}
+
+button{
+  padding:12px 22px;
+  font-size:17px;
+  border:0;
+  border-radius:8px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<h1>♟️ Chess</h1>
+<div id="status">White's turn</div>
+
+<div id="board"></div>
+
+<button onclick="newGame()">🔄 Restart Game</button>
+
+<script type="module">
+
+import { Chess } from
+"https://cdn.jsdelivr.net/npm/chess.js@1.4.0/+esm";
+
+let game=new Chess();
+let selected=null;
+
+const board=document.getElementById("board");
+const status=document.getElementById("status");
+
+const pieces={
+  wp:"♙", wr:"♖", wn:"♘", wb:"♗", wq:"♕", wk:"♔",
+  bp:"♟", br:"♜", bn:"♞", bb:"♝", bq:"♛", bk:"♚"
+};
+
+function draw(){
+
+  board.innerHTML="";
+
+  const files=["a","b","c","d","e","f","g","h"];
+
+  for(let rank=8;rank>=1;rank--){
+
+    for(let file=0;file<8;file++){
+
+      const square=files[file]+rank;
+      const div=document.createElement("div");
+
+      div.className="square "+
+        ((rank+file)%2 ? "dark" : "light");
+
+      if(square===selected)
+        div.classList.add("selected");
+
+      if(selected){
+
+        const moves=game.moves({
+          square:selected,
+          verbose:true
+        });
+
+        if(moves.some(m=>m.to===square))
+          div.classList.add("move");
+      }
+
+      const piece=game.get(square);
+
+      if(piece)
+        div.textContent=pieces[piece.color+piece.type];
+
+      div.onclick=()=>clickSquare(square);
+
+      board.appendChild(div);
+    }
+  }
+
+  updateStatus();
+}
+
+function clickSquare(square){
+
+  if(game.isGameOver()) return;
+
+  const piece=game.get(square);
+
+  if(!selected){
+
+    if(piece && piece.color===game.turn()){
+      selected=square;
+      draw();
+    }
+
+    return;
+  }
+
+  if(piece && piece.color===game.turn()){
+    selected=square;
+    draw();
+    return;
+  }
+
+  try{
+
+    const move=game.move({
+      from:selected,
+      to:square,
+      promotion:"q"
+    });
+
+    if(move){
+      selected=null;
+      draw();
+    }
+
+  }catch(error){}
+}
+
+function updateStatus(){
+
+  if(game.isCheckmate()){
+
+    const winner=
+      game.turn()==="w" ? "Black" : "White";
+
+    status.textContent=
+      "♚ CHECKMATE! "+winner+" WINS!";
+
+    return;
+  }
+
+  if(game.isStalemate()){
+
+    status.textContent="🤝 STALEMATE — DRAW!";
+    return;
+  }
+
+  if(game.isThreefoldRepetition()){
+
+    status.textContent="🤝 THREEFOLD REPETITION — DRAW!";
+    return;
+  }
+
+  if(game.isInsufficientMaterial()){
+
+    status.textContent="🤝 DRAW — INSUFFICIENT MATERIAL!";
+    return;
+  }
+
+  if(game.isDrawByFiftyMoves()){
+
+    status.textContent="🤝 DRAW — 50 MOVE RULE!";
+    return;
+  }
+
+  const turn=game.turn()==="w" ? "White" : "Black";
+
+  status.textContent=
+    turn+(game.inCheck() ? " — ⚠️ CHECK!" : "'s turn");
+}
+
+function newGame(){
+
+  game=new Chess();
+  selected=null;
+  draw();
+
+}
+
+draw();
+
+</script>
+
+</body>
+</html>
